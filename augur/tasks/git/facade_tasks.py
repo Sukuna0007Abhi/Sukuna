@@ -5,7 +5,7 @@ import datetime
 from celery import group, chain
 
 from subprocess import check_output
-from augur.application.db.lib import get_session, get_repo_by_repo_git, get_repo_by_repo_id, remove_working_commits_by_repo_id_and_hashes, get_working_commits_by_repo_id, facade_bulk_insert_commits, bulk_insert_dicts, get_missing_commit_message_hashes
+from augur.application.db.lib import get_session, get_repo_by_repo_git, get_repo_by_repo_id, facade_bulk_insert_commits, bulk_insert_dicts, get_missing_commit_message_hashes
 
 from augur.tasks.git.util.facade_worker.facade_worker.utilitymethods import trim_commits
 from augur.tasks.git.util.facade_worker.facade_worker.utilitymethods import get_absolute_repo_path, get_parent_commits_set, get_existing_commits_set
@@ -88,15 +88,6 @@ def trim_commits_facade_task(repo_git):
 
     facade_helper.inc_repos_processed()
     facade_helper.update_analysis_log(repo_id,"Beginning analysis.")
-    # First we check to see if the previous analysis didn't complete
-
-    working_commits = get_working_commits_by_repo_id(repo_id)
-
-    # If there's a commit still there, the previous run was interrupted and
-    # the commit data may be incomplete. It should be trimmed, just in case.
-    commits_to_trim = [commit['working_commit'] for commit in working_commits]
-    
-    trim_commits(facade_helper,repo_id,commits_to_trim)
     # Start the main analysis
 
     facade_helper.update_analysis_log(repo_id,'Collecting data')
@@ -331,9 +322,6 @@ def analyze_commits_in_parallel(repo_git, multithreaded: bool)-> None:
     )
     if pendingCommitRecordsToInsert:
         facade_bulk_insert_commits(logger, pendingCommitRecordsToInsert)
-        
-    # Remove the working commit.
-    remove_working_commits_by_repo_id_and_hashes(repo_id, queue)
 
     logger.info("Analysis complete")
     return

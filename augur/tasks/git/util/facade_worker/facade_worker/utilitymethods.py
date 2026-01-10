@@ -32,7 +32,7 @@ import sqlalchemy as s
 from augur.application.db.models import *
 from .config import FacadeHelper as FacadeHelper
 from augur.tasks.util.worker_util import calculate_date_weight_from_timestamps
-from augur.application.db.lib import execute_sql, fetchall_data_from_sql_text, remove_working_commits_by_repo_id_and_hashes, remove_commits_by_repo_id_and_hashes, get_repo_by_repo_git, get_session
+from augur.application.db.lib import execute_sql, fetchall_data_from_sql_text, remove_commits_by_repo_id_and_hashes, get_repo_by_repo_git, get_session
 from augur.application.db.util import execute_session_query
 #from augur.tasks.git.util.facade_worker.facade
 
@@ -58,13 +58,9 @@ def trim_commits(facade_helper, repo_id,commits):
 
 	if len(commits):
 		remove_commits_by_repo_id_and_hashes(repo_id, commits)
-	
-		# Remove the working commit.
-		remove_working_commits_by_repo_id_and_hashes(repo_id, commits)
 
 	for commit in commits:
 		facade_helper.log_activity('Debug',f"Trimmed commit: {commit}")
-		facade_helper.log_activity('Debug',f"Removed working commit: {commit}")
 
 def store_working_author(facade_helper, email):
 

@@ -204,18 +204,6 @@ class WorkerSettingsFacade(Base):
         TIMESTAMP(precision=0), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
 
-
-t_working_commits = Table(
-    "working_commits",
-    metadata,
-    Column("repos_id", Integer, nullable=False),
-    Column(
-        "working_commit", String(40), server_default=text("'NULL'::character varying")
-    ),
-    schema="augur_operations",
-    comment="For future use when we move all working tables to the augur_operations schema. ",
-)
-
 class BadgingDEI(Base):
     __tablename__ = 'dei_badging'
     __table_args__ = {"schema": "augur_data"}

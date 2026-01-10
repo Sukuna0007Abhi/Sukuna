@@ -711,17 +711,6 @@ class UtilityLog(Base):
     )
 
 
-t_working_commits = Table(
-    "working_commits",
-    metadata,
-    Column("repos_id", Integer, nullable=False),
-    Column(
-        "working_commit", String(40), server_default=text("'NULL'::character varying")
-    ),
-    schema="augur_data",
-)
-
-
 class ContributorRepo(Base):
     __tablename__ = "contributor_repo"
     __table_args__ = (
