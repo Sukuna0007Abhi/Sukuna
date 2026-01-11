@@ -88,14 +88,18 @@ class GithubEventCollection(ABC):
 
         if event["actor"]:
 
-            event_cntrb = extract_needed_contributor_data(event["actor"], self._tool_source, self._tool_version, self._data_source)
-            event["cntrb_id"] = event_cntrb["cntrb_id"]
+            event_cntrb_tuple = extract_needed_contributor_data(event["actor"], self._tool_source, self._tool_version, self._data_source)
+            if event_cntrb_tuple:
+                core_data, platform_data = event_cntrb_tuple
+                event["cntrb_id"] = core_data["cntrb_id"]
+                return event, event_cntrb_tuple
+            else:
+                event["cntrb_id"] = None
+                return event, None
 
         else:
             event["cntrb_id"] = None
             return event, None
-        
-        return event, event_cntrb
 
 class BulkGithubEventCollection(GithubEventCollection):
 

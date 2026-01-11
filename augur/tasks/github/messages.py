@@ -275,13 +275,14 @@ def is_issue_message(html_url):
 
 def process_github_comment_contributors(message, tool_source, tool_version, data_source):
 
-    contributor = extract_needed_contributor_data(message["user"], tool_source, tool_version, data_source)
-    if contributor:
-        message["cntrb_id"] = contributor["cntrb_id"]
+    contributor_tuple = extract_needed_contributor_data(message["user"], tool_source, tool_version, data_source)
+    if contributor_tuple:
+        core_data, platform_data = contributor_tuple
+        message["cntrb_id"] = core_data["cntrb_id"]
+        return message, contributor_tuple
     else:
         message["cntrb_id"] = None
-
-    return message, contributor
+        return message, None
 
 
 # this function finds a dict in a list of dicts. 

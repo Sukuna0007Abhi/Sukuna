@@ -189,10 +189,13 @@ def process_pull_request_review_contributor(pr_review: dict, tool_source: str, t
     if user is None:
         return None
     
-    pr_review_cntrb = extract_needed_contributor_data(user, tool_source, tool_version, data_source)
-    pr_review["cntrb_id"] = pr_review_cntrb["cntrb_id"]
-
-    return pr_review_cntrb
+    pr_review_cntrb_tuple = extract_needed_contributor_data(user, tool_source, tool_version, data_source)
+    if pr_review_cntrb_tuple:
+        core_data, platform_data = pr_review_cntrb_tuple
+        pr_review["cntrb_id"] = core_data["cntrb_id"]
+        return pr_review_cntrb_tuple
+    
+    return None
 
 @celery.task(base=AugurSecondaryRepoCollectionTask)
 def collect_pull_request_review_comments(repo_git: str, full_collection: bool) -> None:

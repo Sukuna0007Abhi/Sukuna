@@ -652,41 +652,52 @@ def extract_needed_contributor_data(contributor, tool_source, tool_version, data
     cntrb_id = GithubUUID()   
     cntrb_id["user"] = contributor["id"]
 
-    contributor = {
-            "cntrb_id": cntrb_id.to_UUID(),
-            "cntrb_login": contributor['login'],
-            "cntrb_created_at": contributor['created_at'] if 'created_at' in contributor else None,
-            "cntrb_email": contributor['email'] if 'email' in contributor else None,
-            "cntrb_company": contributor['company'] if 'company' in contributor else None,
-            "cntrb_location": contributor['location'] if 'location' in contributor else None,
-            # "cntrb_type": , dont have a use for this as of now ... let it default to null
-            "cntrb_canonical": contributor['email'] if 'email' in contributor else None,
-            "gh_user_id": contributor['id'],
-            "gh_login": str(contributor['login']),  ## cast as string by SPG on 11/28/2021 due to `nan` user
-            "gh_url": contributor['url'],
-            "gh_html_url": contributor['html_url'],
-            "gh_node_id": contributor['node_id'],
-            "gh_avatar_url": contributor['avatar_url'],
-            "gh_gravatar_id": contributor['gravatar_id'],
-            "gh_followers_url": contributor['followers_url'],
-            "gh_following_url": contributor['following_url'],
-            "gh_gists_url": contributor['gists_url'],
-            "gh_starred_url": contributor['starred_url'],
-            "gh_subscriptions_url": contributor['subscriptions_url'],
-            "gh_organizations_url": contributor['organizations_url'],
-            "gh_repos_url": contributor['repos_url'],
-            "gh_events_url": contributor['events_url'],
-            "gh_received_events_url": contributor['received_events_url'],
-            "gh_type": contributor['type'],
-            "gh_site_admin": contributor['site_admin'],
-            "cntrb_last_used" : None if 'updated_at' not in contributor else contributor['updated_at'],
-            "cntrb_full_name" : None if 'name' not in contributor else contributor['name'],
-            "tool_source": tool_source,
-            "tool_version": tool_version,
-            "data_source": data_source
-        }
+    # Core contributor data (identity fields)
+    core_data = {
+        "cntrb_id": cntrb_id.to_UUID(),
+        "cntrb_login": contributor['login'],
+        "cntrb_created_at": contributor['created_at'] if 'created_at' in contributor else None,
+        "cntrb_email": contributor['email'] if 'email' in contributor else None,
+        "cntrb_company": contributor['company'] if 'company' in contributor else None,
+        "cntrb_location": contributor['location'] if 'location' in contributor else None,
+        # "cntrb_type": , dont have a use for this as of now ... let it default to null
+        "cntrb_canonical": contributor['email'] if 'email' in contributor else None,
+        "cntrb_last_used": None if 'updated_at' not in contributor else contributor['updated_at'],
+        "cntrb_full_name": None if 'name' not in contributor else contributor['name'],
+        "tool_source": tool_source,
+        "tool_version": tool_version,
+        "data_source": data_source
+    }
 
-    return contributor
+    # Platform-specific data (GitHub fields)
+    platform_data = {
+        "cntrb_id": cntrb_id.to_UUID(),
+        "platform": "github",
+        "platform_user_id": str(contributor['id']),
+        "gh_user_id": contributor['id'],
+        "gh_login": str(contributor['login']),  ## cast as string by SPG on 11/28/2021 due to `nan` user
+        "gh_url": contributor['url'],
+        "gh_html_url": contributor['html_url'],
+        "gh_node_id": contributor['node_id'],
+        "gh_avatar_url": contributor['avatar_url'],
+        "gh_gravatar_id": contributor['gravatar_id'],
+        "gh_followers_url": contributor['followers_url'],
+        "gh_following_url": contributor['following_url'],
+        "gh_gists_url": contributor['gists_url'],
+        "gh_starred_url": contributor['starred_url'],
+        "gh_subscriptions_url": contributor['subscriptions_url'],
+        "gh_organizations_url": contributor['organizations_url'],
+        "gh_repos_url": contributor['repos_url'],
+        "gh_events_url": contributor['events_url'],
+        "gh_received_events_url": contributor['received_events_url'],
+        "gh_type": contributor['type'],
+        "gh_site_admin": contributor['site_admin'],
+        "tool_source": tool_source,
+        "tool_version": tool_version,
+        "data_source": data_source
+    }
+
+    return (core_data, platform_data)
 
 def extract_needed_gitlab_contributor_data(contributor, tool_source, tool_version,  data_source):
 
@@ -696,41 +707,40 @@ def extract_needed_gitlab_contributor_data(contributor, tool_source, tool_versio
     cntrb_id = GitlabUUID()   
     cntrb_id["user"] = contributor["id"]
 
-    contributor = {
-            "cntrb_id": cntrb_id.to_UUID(),
-            "cntrb_login": contributor['username'],
-            "cntrb_created_at": contributor['created_at'] if 'created_at' in contributor else None,
-            "cntrb_email": contributor['email'] if 'email' in contributor else None,
-            "cntrb_company": contributor['company'] if 'company' in contributor else None,
-            "cntrb_location": contributor['location'] if 'location' in contributor else None,
-            # "cntrb_type": , dont have a use for this as of now ... let it default to null
-            "cntrb_canonical": contributor['email'] if 'email' in contributor else None,
-            "gh_user_id": contributor['id'],
-            "gh_login": str(contributor['username']),  ## cast as string by SPG on 11/28/2021 due to `nan` user
-            "gh_url": contributor['web_url'],
-            "gh_html_url": None,
-            "gh_node_id": None,
-            "gh_avatar_url": contributor['avatar_url'],
-            "gh_gravatar_id": None,
-            "gh_followers_url": None,
-            "gh_following_url": None,
-            "gh_gists_url": None,
-            "gh_starred_url": None,
-            "gh_subscriptions_url": None,
-            "gh_organizations_url": None,
-            "gh_repos_url": None,
-            "gh_events_url": None,
-            "gh_received_events_url": None,
-            "gh_type": None,
-            "gh_site_admin": None,
-            "cntrb_last_used" : None,
-            "cntrb_full_name" : None,
-            "tool_source": tool_source,
-            "tool_version": tool_version,
-            "data_source": data_source
-        }
+    # Core contributor data (identity fields)
+    core_data = {
+        "cntrb_id": cntrb_id.to_UUID(),
+        "cntrb_login": contributor['username'],
+        "cntrb_created_at": contributor['created_at'] if 'created_at' in contributor else None,
+        "cntrb_email": contributor['email'] if 'email' in contributor else None,
+        "cntrb_company": contributor['company'] if 'company' in contributor else None,
+        "cntrb_location": contributor['location'] if 'location' in contributor else None,
+        # "cntrb_type": , dont have a use for this as of now ... let it default to null
+        "cntrb_canonical": contributor['email'] if 'email' in contributor else None,
+        "cntrb_last_used": None,
+        "cntrb_full_name": None,
+        "tool_source": tool_source,
+        "tool_version": tool_version,
+        "data_source": data_source
+    }
 
-    return contributor
+    # Platform-specific data (GitLab fields)
+    platform_data = {
+        "cntrb_id": cntrb_id.to_UUID(),
+        "platform": "gitlab",
+        "platform_user_id": str(contributor['id']),
+        "gl_id": contributor['id'],
+        "gl_username": str(contributor['username']),
+        "gl_web_url": contributor['web_url'],
+        "gl_avatar_url": contributor['avatar_url'],
+        "gl_state": contributor.get('state'),
+        "gl_full_name": contributor.get('name'),
+        "tool_source": tool_source,
+        "tool_version": tool_version,
+        "data_source": data_source
+    }
+
+    return (core_data, platform_data)
 
 
 def extract_needed_clone_history_data(clone_history_data:List[dict], repo_id:int):

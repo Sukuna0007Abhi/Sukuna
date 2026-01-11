@@ -228,15 +228,19 @@ def process_issue_contributors(issue, tool_source, tool_version, data_source):
 
     contributors = []
 
-    issue_cntrb = extract_needed_contributor_data(issue["user"], tool_source, tool_version, data_source)
-    issue["cntrb_id"] = issue_cntrb["cntrb_id"]
-    contributors.append(issue_cntrb)
+    issue_cntrb_tuple = extract_needed_contributor_data(issue["user"], tool_source, tool_version, data_source)
+    if issue_cntrb_tuple:
+        core_data, platform_data = issue_cntrb_tuple
+        issue["cntrb_id"] = core_data["cntrb_id"]
+        contributors.append(issue_cntrb_tuple)
 
     for assignee in issue["assignees"]:
 
-        issue_assignee_cntrb = extract_needed_contributor_data(assignee, tool_source, tool_version, data_source)
-        assignee["cntrb_id"] = issue_assignee_cntrb["cntrb_id"]
-        contributors.append(issue_assignee_cntrb)
+        issue_assignee_cntrb_tuple = extract_needed_contributor_data(assignee, tool_source, tool_version, data_source)
+        if issue_assignee_cntrb_tuple:
+            core_data, platform_data = issue_assignee_cntrb_tuple
+            assignee["cntrb_id"] = core_data["cntrb_id"]
+            contributors.append(issue_assignee_cntrb_tuple)
 
     return issue, contributors
 

@@ -311,6 +311,82 @@ class Contributor(Base):
         return contributor_obj
 
 
+class ContributorPlatformData(Base):
+    __tablename__ = "contributor_platform_data"
+    __table_args__ = (
+        Index("cpd_cntrb_id_idx", "cntrb_id"),
+        Index("cpd_platform_user_id_idx", "platform_user_id"),
+        Index("cpd_gh_user_id_idx", "gh_user_id"),
+        Index("cpd_gl_id_idx", "gl_id"),
+        {
+            "schema": "augur_data",
+            "comment": "Platform-specific contributor data from GitHub, GitLab, etc.",
+        },
+    )
+
+    cpd_id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text(
+            "gen_random_uuid()"
+        ),
+    )
+    cntrb_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("augur_data.contributors.cntrb_id", ondelete="CASCADE"),
+        nullable=False,
+        comment="Foreign key to contributors table"
+    )
+    platform = Column(
+        String(50),
+        nullable=False,
+        comment="Platform name: 'github', 'gitlab', etc."
+    )
+    platform_user_id = Column(
+        String,
+        nullable=False,
+        comment="User ID on the platform (gh_user_id or gl_id as string)"
+    )
+    
+    # GitHub-specific fields
+    gh_user_id = Column(BigInteger)
+    gh_login = Column(String)
+    gh_url = Column(String)
+    gh_html_url = Column(String)
+    gh_node_id = Column(String)
+    gh_avatar_url = Column(String)
+    gh_gravatar_id = Column(String)
+    gh_followers_url = Column(String)
+    gh_following_url = Column(String)
+    gh_gists_url = Column(String)
+    gh_starred_url = Column(String)
+    gh_subscriptions_url = Column(String)
+    gh_organizations_url = Column(String)
+    gh_repos_url = Column(String)
+    gh_events_url = Column(String)
+    gh_received_events_url = Column(String)
+    gh_type = Column(String)
+    gh_site_admin = Column(String)
+    
+    # GitLab-specific fields
+    gl_id = Column(BigInteger)
+    gl_web_url = Column(String)
+    gl_avatar_url = Column(String)
+    gl_state = Column(String)
+    gl_username = Column(String)
+    gl_full_name = Column(String)
+    
+    tool_source = Column(String)
+    tool_version = Column(String)
+    data_source = Column(String)
+    data_collection_date = Column(
+        TIMESTAMP(precision=0), server_default=text("CURRENT_TIMESTAMP")
+    )
+
+    # Relationship back to Contributor
+    contributor = relationship("Contributor", backref="platform_data")
+
+
 t_dm_repo_annual = Table(
     "dm_repo_annual",
     metadata,

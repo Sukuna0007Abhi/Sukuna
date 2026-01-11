@@ -278,47 +278,52 @@ def insert_pr_metadata(metadata: List[dict], logger: logging.Logger) -> None:
 # TODO: Should we insert metadata without user relation?
 # NOTE: For contributor related operations: extract_needed_contributor_data takes a piece of github contributor data
 # and creates a cntrb_id (primary key for the contributors table) and gets the data needed for the table
-def process_pull_request_contributors(pr: dict, tool_source: str, tool_version: str, data_source: str) -> Tuple[dict, List[dict]]:
+def process_pull_request_contributors(pr: dict, tool_source: str, tool_version: str, data_source: str) -> Tuple[dict, List[tuple]]:
 
     contributors = []
 
     # get contributor data and set pr cntrb_id
-    pr_cntrb = extract_needed_contributor_data(pr["user"], tool_source, tool_version, data_source)
-    pr["cntrb_id"] = pr_cntrb["cntrb_id"]
-
-    contributors.append(pr_cntrb)
+    pr_cntrb_tuple = extract_needed_contributor_data(pr["user"], tool_source, tool_version, data_source)
+    if pr_cntrb_tuple:
+        core_data, platform_data = pr_cntrb_tuple
+        pr["cntrb_id"] = core_data["cntrb_id"]
+        contributors.append(pr_cntrb_tuple)
 
 
     if pr["base"]["user"]:
 
         # get contributor data and set pr metadat cntrb_id
-        pr_meta_base_cntrb = extract_needed_contributor_data(pr["base"]["user"], tool_source, tool_version, data_source)
-        pr["base"]["cntrb_id"] = pr_meta_base_cntrb["cntrb_id"]
-
-        contributors.append(pr_meta_base_cntrb)
+        pr_meta_base_cntrb_tuple = extract_needed_contributor_data(pr["base"]["user"], tool_source, tool_version, data_source)
+        if pr_meta_base_cntrb_tuple:
+            core_data, platform_data = pr_meta_base_cntrb_tuple
+            pr["base"]["cntrb_id"] = core_data["cntrb_id"]
+            contributors.append(pr_meta_base_cntrb_tuple)
 
     if pr["head"]["user"]:
 
-        pr_meta_head_cntrb = extract_needed_contributor_data(pr["head"]["user"], tool_source, tool_version, data_source)
-        pr["head"]["cntrb_id"] = pr_meta_head_cntrb["cntrb_id"]
-
-        contributors.append(pr_meta_head_cntrb)
+        pr_meta_head_cntrb_tuple = extract_needed_contributor_data(pr["head"]["user"], tool_source, tool_version, data_source)
+        if pr_meta_head_cntrb_tuple:
+            core_data, platform_data = pr_meta_head_cntrb_tuple
+            pr["head"]["cntrb_id"] = core_data["cntrb_id"]
+            contributors.append(pr_meta_head_cntrb_tuple)
 
     # set cntrb_id for assignees
     for assignee in pr["assignees"]:
 
-        pr_asignee_cntrb = extract_needed_contributor_data(assignee, tool_source, tool_version, data_source)
-        assignee["cntrb_id"] = pr_asignee_cntrb["cntrb_id"]
-
-        contributors.append(pr_asignee_cntrb)
+        pr_asignee_cntrb_tuple = extract_needed_contributor_data(assignee, tool_source, tool_version, data_source)
+        if pr_asignee_cntrb_tuple:
+            core_data, platform_data = pr_asignee_cntrb_tuple
+            assignee["cntrb_id"] = core_data["cntrb_id"]
+            contributors.append(pr_asignee_cntrb_tuple)
 
 
     # set cntrb_id for reviewers
     for reviewer in pr["requested_reviewers"]:
 
-        pr_reviwer_cntrb = extract_needed_contributor_data(reviewer, tool_source, tool_version, data_source)
-        reviewer["cntrb_id"] = pr_reviwer_cntrb["cntrb_id"]
-
-        contributors.append(pr_reviwer_cntrb)
+        pr_reviwer_cntrb_tuple = extract_needed_contributor_data(reviewer, tool_source, tool_version, data_source)
+        if pr_reviwer_cntrb_tuple:
+            core_data, platform_data = pr_reviwer_cntrb_tuple
+            reviewer["cntrb_id"] = core_data["cntrb_id"]
+            contributors.append(pr_reviwer_cntrb_tuple)
 
     return pr, contributors

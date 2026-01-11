@@ -10,7 +10,7 @@ from sqlalchemy.exc import OperationalError
 from psycopg2.errors import DeadlockDetected
 from typing import List, Any, Optional, Union
 
-from augur.application.db.models import Config, Repo, Commit, WorkerOauth, Issue, PullRequest, PullRequestReview, ContributorsAlias,UnresolvedCommitEmail, Contributor, CollectionStatus, UserGroup, RepoGroup
+from augur.application.db.models import Config, Repo, Commit, WorkerOauth, Issue, PullRequest, PullRequestReview, ContributorsAlias,UnresolvedCommitEmail, Contributor, ContributorPlatformData, CollectionStatus, UserGroup, RepoGroup
 from augur.tasks.util.collection_state import CollectionState
 from augur.application.db import get_session, get_engine
 from augur.application.db.util import execute_session_query, convert_type_of_value
@@ -244,12 +244,63 @@ def facade_bulk_insert_commits(logger, records):
             else:
                 raise e
 
-def batch_insert_contributors(logger, data: Union[List[dict], dict], batch_size = 1000) -> Optional[List[dict]]:
-
-    for i in range(0, len(data), batch_size):
-        batch = data[i:i + batch_size]
-
-        bulk_insert_dicts(logger, batch, Contributor, ['cntrb_id'])
+def batch_insert_contributors(logger, data: Union[List[dict], List[tuple], dict, tuple], batch_size = 1000) -> Optional[List[dict]]:
+    """
+    Insert contributors and their platform data.
+    
+    Args:
+        logger: Logger instance
+        data: Can be:
+            - List of tuples: [(core_data, platform_data), ...]
+            - Single tuple: (core_data, platform_data)
+            - List of dicts: [contributor_dict, ...] (legacy format)
+            - Single dict: contributor_dict (legacy format)
+        batch_size: Number of records to insert at once
+    
+    Returns:
+        None
+    """
+    # Handle single item input
+    if isinstance(data, tuple):
+        data = [data]
+    elif isinstance(data, dict):
+        data = [data]
+    
+    if len(data) == 0:
+        return None
+    
+    # Check if we have new format (tuples) or legacy format (dicts)
+    if isinstance(data[0], tuple):
+        # New format: separate core and platform data
+        core_data_list = []
+        platform_data_list = []
+        
+        for item in data:
+            if item is None:
+                continue
+            core_data, platform_data = item
+            if core_data:
+                core_data_list.append(core_data)
+            if platform_data:
+                platform_data_list.append(platform_data)
+        
+        # Insert core contributor data
+        if core_data_list:
+            for i in range(0, len(core_data_list), batch_size):
+                batch = core_data_list[i:i + batch_size]
+                bulk_insert_dicts(logger, batch, Contributor, ['cntrb_id'])
+        
+        # Insert platform-specific data
+        if platform_data_list:
+            for i in range(0, len(platform_data_list), batch_size):
+                batch = platform_data_list[i:i + batch_size]
+                bulk_insert_dicts(logger, batch, ContributorPlatformData, ['cntrb_id', 'platform'])
+    
+    else:
+        # Legacy format: single dict per contributor
+        for i in range(0, len(data), batch_size):
+            batch = data[i:i + batch_size]
+            bulk_insert_dicts(logger, batch, Contributor, ['cntrb_id'])
     
     return None
 
@@ -510,11 +561,22 @@ def get_contributors_by_full_name(full_name):
         return session.query(Contributor).filter_by(cntrb_full_name=full_name).all()
     
 def get_contributors_by_github_user_id(id):
-
+    """
+    Get contributors by GitHub user ID.
+    Now queries the contributor_platform_data table for GitHub-specific data.
+    """
     with get_session() as session:
-
-        # Look into this, where it was used was doing .all() but this query should really only return one
-        return session.query(Contributor).filter_by(gh_user_id=id).all()
+        # Query through platform_data table to find the contributor
+        platform_data = session.query(ContributorPlatformData).filter_by(
+            platform='github',
+            gh_user_id=id
+        ).first()
+        
+        if platform_data:
+            # Return the associated contributor
+            return [platform_data.contributor]
+        
+        return []
 
 def update_issue_closed_cntrbs_by_repo_id(repo_id):
 
