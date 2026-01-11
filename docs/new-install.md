@@ -380,7 +380,28 @@ You can stop augur with `augur backend stop`, followed by `augur backend kill`. 
    - Change to variables in `environment.txt` to include the correct values for your local, non-docker-container database.
 4. `sudo docker build -t augur-new -f docker/backend/Dockerfile .` OSX: 
 5. `sudo docker compose --env-file ./environment.txt --file docker-compose.yml up` to run the database in a Docker Container or 
-   `sudo docker compose --env-file ./environment.txt --file docker-compose.yml up` to connect to an already running database. *Note*: Environment file would be modified to point to an already running database. 
+   `sudo docker compose --env-file ./environment.txt --file docker-compose.yml up` to connect to an already running database. *Note*: Environment file would be modified to point to an already running database.
+
+#### Troubleshooting Volume Permissions
+
+If you experience "Permission denied" errors when accessing `/facade`, `/logs`, `/config`, or `/cache` directories (especially when upgrading from older Augur versions), you have two options:
+
+**Option 1: Remove and recreate volumes (recommended for fresh start)**
+```bash
+sudo docker compose down --volumes
+sudo docker compose --env-file ./environment.txt --file docker-compose.yml up
+```
+
+**Option 2: Manually fix permissions on existing volumes**
+```bash
+# For each volume that has permission issues:
+sudo docker run --rm -v augur_facade:/facade alpine chmod -R 777 /facade
+sudo docker run --rm -v augur_logs:/logs alpine chmod -R 777 /logs
+sudo docker run --rm -v augur_config:/config alpine chmod -R 777 /config
+sudo docker run --rm -v augur_cache:/cache alpine chmod -R 777 /cache
+```
+
+**Note for podman users:** Augur's docker-compose.yml is compatible with both Docker and Podman Compose. Fresh installations should work without permission issues. 
 
 
 #### Possible Apple Silicon Prerequisites: 

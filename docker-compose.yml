@@ -85,10 +85,12 @@ services:
     networks:
       - augur
     user: 2345:2345  # Run as an arbitrary non-root user
-    post_start:
-      # Make sure the user has access to the volumes
-      - command: chmod -R 777 /facade /logs /config /cache
-        user: root
+    # Note: If you experience permission errors with existing volumes from previous
+    # installations (e.g., "Permission denied" errors in /facade, /logs, /config, or /cache),
+    # you can either:
+    #   1. Remove the old volumes with: docker compose down --volumes
+    #   2. Manually fix permissions: docker run --rm -v augur_facade:/facade alpine chmod -R 777 /facade
+    # Fresh installations should not experience any permission issues.
   
   # Flower is a UI that helps more easily monitor running tasks for celery workers.
   # This wont show you every error from the entire augur system, but it should show most of them.
