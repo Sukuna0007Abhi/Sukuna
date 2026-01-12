@@ -51,6 +51,12 @@ services:
       - RABBIT_MQ_DEFAULT_VHOST=${AUGUR_RABBITMQ_VHOST:-augur_vhost}
     networks:
       - augur
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   augur:
     image: augur-new:latest
@@ -92,7 +98,7 @@ services:
       augur-keyman:
         condition: service_started
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
     networks:
       - augur
     user: 2345:2345  # Run as an arbitrary non-root user

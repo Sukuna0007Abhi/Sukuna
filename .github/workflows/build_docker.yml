@@ -163,15 +163,19 @@ jobs:
           EOF
 
       - name: Start services & wait for output
-        # This starts the system and sends the output to "await_all.py" which
-        # scans for the regex matches from above. Once all matches are seen at
-        # least once, the `compose down` will run to shut down the system. If
-        # this all doesn't happen before the timeout, the job will fail.
+        # Start services detached, wait for RabbitMQ readiness, then stream logs
         run: |
-          docker compose -f docker-compose.yml up --no-build 2>&1 \
-            | (./scripts/ci/await_all.py /tmp/regex_matches.txt \
-                && docker compose -f docker-compose.yml down)
-        timeout-minutes: 3
+          docker compose -f docker-compose.yml up --no-build -d
+          echo "Waiting for RabbitMQ to be healthy..."
+          for i in $(seq 1 30); do
+            docker compose exec -T rabbitmq rabbitmq-diagnostics -q ping && { echo "RabbitMQ ready"; break; }
+            echo "Waiting for RabbitMQ (attempt $i/30)..."
+            sleep 5
+          done
+          # Stream logs into await_all.py and bring services down after matches
+          docker compose -f docker-compose.yml logs -f 2>&1 \
+            | (./scripts/ci/await_all.py /tmp/regex_matches.txt && docker compose -f docker-compose.yml down)
+        timeout-minutes: 20
         env:
           AUGUR_GITHUB_API_KEY: ${{ secrets.GITHUB_TOKEN }}
           AUGUR_GITHUB_USERNAME: ${{ github.repository_owner }}
